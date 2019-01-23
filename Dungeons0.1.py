@@ -5,21 +5,21 @@
 import pygame
 import sys
 
-
 pygame.init()
+
+# color palette
+black = (0, 0, 0)
+white = (255, 255, 255)
+red = (255, 0, 0)
+blue = (0, 0, 255)
+green = (0, 120, 0)
+
+#screen
+size = height, width = 500, 500
+screen = pygame.display.set_mode(size)
 
 
 def main():
-    game_setup()
-
-
-# setup game variables and opening screen
-def game_setup():
-    size = height, width = 500, 1000
-    black = 0, 0, 0
-
-    screen = pygame.display.set_mode(size)
-
     while 1:
         # quit if necessary
         for event in pygame.event.get():
@@ -28,29 +28,51 @@ def game_setup():
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     sys.exit()
+            player = game_setup()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    game_play(player)
 
-        screen.fill(black)
-        text_to_screen(screen=screen, text="Welcome", x=60, y=175, color=(0, 0, 255))
-        text_to_screen(screen, "Press space to continue", 40, 250, 20, (0, 0, 255))
-        pygame.display.flip()
+
+# setup game variables and opening screen
+def game_setup():
+    screen.fill(black)
+    text_to_screen(screen=screen, text="Welcome", x=120, y=175, color=white)
+    text_to_screen(screen, "Press space to continue", 100, 250, 20, white)
+    pygame.display.flip()
+    gamer = Player(50, 50, 1, 1)
+    return gamer
+
+
+# run game when player indicates
+def game_play(player):
+    screen.fill(red)
+    while player.health > 0:
+        # quit if necessary
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    sys.exit()
+            pygame.display.flip()
 
 
 # apply text to screen
 def text_to_screen(screen, text, x, y, size=50,
-                   color=(200, 000, 000), font_type='data/slkscr.ttf'):
-
-        text = str(text)
-        font = pygame.font.Font(font_type, size)
-        text = font.render(text, True, color)
-        screen.blit(text, (x, y))
+                   color=red, font_type='data/slkscr.ttf'):
+    text = str(text)
+    font = pygame.font.Font(font_type, size)
+    text = font.render(text, True, color)
+    screen.blit(text, (x, y))
 
 
 class Player:
-    def __init__(self, x, y, vel, name):
+    def __init__(self, x, y, vel, health):
         self.x = x
         self.y = y
         self.vel = vel
-        self.name = name
+        self.health = health
 
 
 main()
