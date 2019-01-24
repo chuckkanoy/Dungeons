@@ -26,16 +26,31 @@ screen = pygame.display.set_mode(size)
 scale = 10
 
 
-# create the layout for a level
-def level_creation():
-    level = []
-    new = []
-    for i in range(scale):
-        for j in range(scale):
-            new.append(0)
-        level.append(new)
+class Level:
+    def __init__(self, x, y):
+        self.rect = pygame.rect.Rect((x, y, scale, scale))
+
+    @staticmethod
+    def create_level(character):
+        level = []
         new = []
-    return level
+        for i in range(scale):
+            for j in range(scale):
+                new.append(0)
+            level.append(new)
+            new = []
+
+        level[character.x][character.y] = 1
+        return level
+
+    # draw level
+    def draw_level(self, level):
+        x, y = width / scale, height / scale
+
+        for i in range(scale):
+            for j in range(scale):
+                if level[i][j] == 1:
+                    pygame.draw.rect(screen, black, self.rect)
 
 
 def main():
@@ -55,11 +70,13 @@ def main():
 
 # setup game variables and opening screen
 def game_setup():
+    # set up opening screen
     screen.fill(black)
     text_to_screen(screen=screen, text="Welcome", x=120, y=175, color=white)
     text_to_screen(screen, "Press space to continue", 100, 250, 20, white)
     pygame.display.flip()
-    gamer = Player(0, 0, 1, 1)
+
+    gamer = Player(0, 0, width / scale, 1)
     return gamer
 
 
@@ -70,20 +87,14 @@ def game_play(player):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()
+            # handle keys
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     sys.exit()
-                elif event.key == pygame.K_DOWN:
-                    player.move(DOWN)
-                elif event.key == pygame.K_LEFT:
-                    player.move(LEFT)
-                elif event.key == pygame.K_UP:
-                    player.move(UP)
-                elif event.key == pygame.K_RIGHT:
-                    player.move(RIGHT)
-
+                else:
+                    player.move()
             screen.fill(red)
-            player.draw(player.x, player.y)
+            player.draw()
             pygame.display.flip()
 
 
@@ -108,21 +119,30 @@ class Player:
         self.y = y
         self.vel = vel
         self.health = health
+        self.rect = pygame.rect.Rect(self.x, self.y, height / scale, width / scale)
 
-    def draw(self, x, y):
-        pygame.draw.rect(screen, black,
-                         (fit_to_scale(x), fit_to_scale(y),
-                          fit_to_scale(x + 1), fit_to_scale(y + 1)), 0)
+    def draw(self):
+        pygame.draw.rect(screen, black, self.rect)
 
-    def move(self, direction):
-        if direction == UP:
-            self.y -= self.vel
-        elif direction == RIGHT:
-            self.x += self.vel
-        elif direction == DOWN:
-            self.y += self.vel
-        elif direction == LEFT:
-            self.x -= self.vel
+    def move(self):
+        key = pygame.key.get_pressed()
+
+        if key[pygame.K_LEFT]:
+            if not (self.x <= 0):
+                self.rect.move_ip(-self.vel, 0)
+                self.x -= self.vel
+        if key[pygame.K_RIGHT]:
+            if not (self.x >= width - self.vel):
+                self.rect.move_ip(self.vel, 0)
+                self.x += self.vel
+        if key[pygame.K_UP]:
+            if not (self.y <= 0):
+                self.rect.move_ip(0, -self.vel)
+                self.y -= self.vel
+        if key[pygame.K_DOWN]:
+            if not (self.y >= height - self.vel):
+                self.rect.move_ip(0, self.vel)
+                self.y += self.vel
 
 
 main()
