@@ -38,7 +38,7 @@ class Level:
             self.level.append(self.new)
             self.new = []
 
-        self.level[player.x][player.y] = 1
+        self.level[player.y][player.x] = 1
 
     def update(self, player):
         # refresh the array
@@ -51,7 +51,7 @@ class Level:
             self.level.append(self.new)
             self.new = []
 
-        self.level[player.x][player.y] = 1
+        self.level[player.y][player.x] = 1
 
     def print_level_arr(self):
         for arr in self.level:
