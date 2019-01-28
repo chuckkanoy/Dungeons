@@ -4,6 +4,7 @@
 
 import pygame
 import sys
+from numpy import random
 
 pygame.init()
 
@@ -12,7 +13,8 @@ black = (0, 0, 0)
 white = (255, 255, 255)
 red = (255, 0, 0)
 blue = (0, 0, 255)
-green = (0, 120, 0)
+green = (75,114,72)
+horse_brown = (68, 58, 50)
 
 # directions
 UP = 1
@@ -28,7 +30,7 @@ square = height / scale
 
 
 class Level:
-    def __init__(self, player):
+    def __init__(self, player, enemy, door):
         self.level = []
         self.new = []
 
@@ -39,19 +41,8 @@ class Level:
             self.new = []
 
         self.level[player.y][player.x] = 1
-
-    def update(self, player):
-        # refresh the array
-        self.level = []
-        self.new = []
-
-        for i in range(scale):
-            for j in range(scale):
-                self.new.append(0)
-            self.level.append(self.new)
-            self.new = []
-
-        self.level[player.y][player.x] = 1
+        self.level[door.y][door.x] = 2
+        self.level[enemy.y][enemy.x] = 3
 
     def print_level_arr(self):
         for arr in self.level:
@@ -80,21 +71,23 @@ def main():
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
-                    player, level = game_setup()
-                    game_play(player, level)
+                    player, enemy, door, level = game_setup()
+                    game_play(player, enemy, door, level)
 
 
 # setup game variables
 def game_setup():
-    gamer = Player(0, 0, 1, 1)
-    level = Level(gamer)
+    gamer = Player(random.randint(0, scale - 1), random.randint(0, scale - 1), 1, 1, horse_brown)
+    door = Door(random.randint(0, scale - 1), random.randint(0, scale - 1), black)
+    vill = Enemy(random.randint(0, scale - 1), random.randint(0, scale - 1), 1, 1, red)
+    level = Level(gamer, vill, door)
     level.print_level_arr()
 
-    return gamer, level
+    return gamer, vill, door, level
 
 
 # run game when player indicates
-def game_play(player, level):
+def game_play(player, enemy, door, level):
     while player.health > 0:
         # quit if necessary
         for event in pygame.event.get():
@@ -107,12 +100,14 @@ def game_play(player, level):
                     sys.exit()
                 else:
                     player.move_player()
-                    level.update(player)
+                    level.__init__(player, enemy, door)
                     level.print_level_arr()
 
             # reprints the screen
-            screen.fill(red)
+            screen.fill(green)
             player.draw()
+            door.draw()
+            enemy.draw()
             pygame.display.flip()
 
 
@@ -125,17 +120,23 @@ def text_to_screen(screen, text, x, y, size=50,
     screen.blit(text, (x, y))
 
 
-# defines player in game
-class Player:
-    def __init__(self, x, y, vel, health):
+class GameObject:
+    def __init__(self, x, y, color):
         self.x = x
         self.y = y
-        self.vel = vel
-        self.health = health
+        self.color = color
         self.rect = pygame.rect.Rect(self.x * square, self.y * square, square, square)
 
+
+# defines player in game
+class Player(GameObject):
+    def __init__(self, x, y, vel, health, color):
+        GameObject.__init__(self, x, y, color)
+        self.vel = vel
+        self.health = health
+
     def draw(self):
-        pygame.draw.rect(screen, black, self.rect)
+        pygame.draw.rect(screen, self.color, self.rect)
 
     def move_player(self):
         actual = self.vel * square
@@ -158,6 +159,24 @@ class Player:
             if not (self.y >= scale - self.vel):
                 self.rect.move_ip(0, actual)
                 self.y += self.vel
+
+
+class Door(GameObject):
+    def __init__(self, x, y, color):
+        GameObject.__init__(self, x, y, color)
+
+    def draw(self):
+        pygame.draw.ellipse(screen, self.color, self.rect)
+
+
+class Enemy(GameObject):
+    def __init__(self, x, y, vel, health, color):
+        GameObject.__init__(self, x, y, color)
+        self.vel = vel
+        self.health = health
+
+    def draw(self):
+        pygame.draw.rect(screen, self.color, self.rect)
 
 
 main()
