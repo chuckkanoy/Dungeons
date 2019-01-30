@@ -27,6 +27,7 @@ size = height, width = 500, 500
 screen = pygame.display.set_mode(size)
 scale = 10
 square = height / scale
+level_count = 1
 
 
 class Level:
@@ -50,6 +51,7 @@ class Level:
             for num in arr:
                 line += str(num) + " "
             print(line)
+        print(level_count)
         print('\n')
 
 
@@ -71,8 +73,7 @@ def main():
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
-                    player, enemy, door, level = game_setup()
-                    game_play(player, enemy, door, level)
+                    game_setup()
 
 
 # setup game variables
@@ -80,10 +81,14 @@ def game_setup():
     gamer = Player(random.randint(0, scale - 1), random.randint(0, scale - 1), 1, 1, horse_brown)
     door = Door(random.randint(0, scale - 1), random.randint(0, scale - 1), black)
     vill = Enemy(random.randint(0, scale - 1), random.randint(0, scale - 1), 1, 1, red)
+
     level = Level(gamer, vill, door)
     level.print_level_arr()
 
-    return gamer, vill, door, level
+    global level_count
+    level_count += 1
+
+    game_play(gamer, vill, door, level)
 
 
 # run game when player indicates
@@ -99,6 +104,9 @@ def game_play(player, enemy, door, level):
                 if event.key == pygame.K_ESCAPE:
                     sys.exit()
                 else:
+                    if player.x == door.x and player.y == door.y:
+                        show_level()
+                        game_setup()
                     player.move_player()
                     level.__init__(player, enemy, door)
                     level.print_level_arr()
@@ -109,6 +117,26 @@ def game_play(player, enemy, door, level):
             door.draw()
             enemy.draw()
             pygame.display.flip()
+
+def show_level():
+    global level_count
+    screen.fill(black)
+    text_to_screen(screen=screen, text="Level " + str(level_count), x=140, y=175, color=white)
+    text_to_screen(screen, "Press space to continue", 100, 250, 20, white)
+    pygame.display.flip()
+
+    while 1:
+        # quit if necessary
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    sys.exit()
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    game_setup()
 
 
 # apply text to screen
