@@ -13,7 +13,7 @@ black = (0, 0, 0)
 white = (255, 255, 255)
 red = (255, 0, 0)
 blue = (0, 0, 255)
-green = (75,114,72)
+green = (75, 114, 72)
 horse_brown = (68, 58, 50)
 
 # directions
@@ -23,7 +23,7 @@ DOWN = 3
 LEFT = 4
 
 # screen
-size = height, width = 500, 500
+size = height, width = 500, 700
 screen = pygame.display.set_mode(size)
 scale = 10
 square = height / scale
@@ -96,6 +96,12 @@ def game_play(player, enemy, door, level):
     while player.health > 0:
         # quit if necessary
         for event in pygame.event.get():
+
+            # change levels if landed on door
+            if player.x == door.x and player.y == door.y:
+                show_level()
+                game_setup()
+
             if event.type == pygame.QUIT:
                 sys.exit()
 
@@ -104,20 +110,14 @@ def game_play(player, enemy, door, level):
                 if event.key == pygame.K_ESCAPE:
                     sys.exit()
                 else:
-                    if player.x == door.x and player.y == door.y:
-                        show_level()
-                        game_setup()
                     player.move_player()
                     level.__init__(player, enemy, door)
                     level.print_level_arr()
 
-            # reprints the screen
-            screen.fill(green)
-            player.draw()
-            door.draw()
-            enemy.draw()
-            pygame.display.flip()
+            print_screen(screen, player, door, enemy)
 
+
+# display the level the player is on
 def show_level():
     global level_count
     screen.fill(black)
@@ -134,9 +134,25 @@ def show_level():
                 if event.key == pygame.K_ESCAPE:
                     sys.exit()
 
+            # handle the next move
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     game_setup()
+
+
+# prints objects on the screen
+def print_screen(screen, player, door, enemy):
+    screen.fill(green)
+    player.draw()
+    door.draw()
+    enemy.draw()
+
+    # draw player UI on bottom of screen
+    outline = pygame.rect.Rect(0, height, width, 200)
+    pygame.draw.rect(screen, black, outline)
+    health_bar = pygame.rect.Rect(width / 2, height + 50, 100, 10)
+    pygame.draw.rect(screen, green, health_bar)
+    pygame.display.flip()
 
 
 # apply text to screen
