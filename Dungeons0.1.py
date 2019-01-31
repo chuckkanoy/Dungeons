@@ -4,7 +4,7 @@
 
 import pygame
 import sys
-from numpy import random
+from numpy import *
 
 pygame.init()
 
@@ -111,6 +111,7 @@ def game_play(player, enemy, door, level):
                     sys.exit()
                 else:
                     player.move_player()
+                    enemy.move(player)
                     level.__init__(player, enemy, door)
                     level.print_level_arr()
 
@@ -150,7 +151,9 @@ def print_screen(screen, player, door, enemy):
     # draw player UI on bottom of screen
     outline = pygame.rect.Rect(0, height, width, 200)
     pygame.draw.rect(screen, black, outline)
-    health_bar = pygame.rect.Rect(width / 2, height + 50, 100, 10)
+
+    text_to_screen(screen, "Health", width / 2, height + 60, 20, green)
+    health_bar = pygame.rect.Rect(width / 2, height + 80, player.health * 100, 10)
     pygame.draw.rect(screen, green, health_bar)
     pygame.display.flip()
 
@@ -186,7 +189,6 @@ class Player(GameObject):
         actual = self.vel * square
 
         key = pygame.key.get_pressed()
-
         if key[pygame.K_LEFT]:
             if not (self.x <= 0):
                 self.rect.move_ip(-actual, 0)
@@ -222,5 +224,24 @@ class Enemy(GameObject):
     def draw(self):
         pygame.draw.rect(screen, self.color, self.rect)
 
+    def move(self, player):
+        actual = self.vel * square
+        x_dist = abs(self.x - player.x)
+        y_dist = abs(self.y - player.y)
+
+        if x_dist > y_dist:
+            if self.x > player.x :
+                self.rect.move_ip(-actual, 0)
+                self.x -= self.vel
+            elif self.x < player.x:
+                self.rect.move_ip(actual, 0)
+                self.x += self.vel
+        else:
+            if self.y > player.y:
+                self.rect.move_ip(0, -actual)
+                self.y -= self.vel
+            elif self.y < player.y:
+                self.rect.move_ip(0, actual)
+                self.y += self.vel
 
 main()
