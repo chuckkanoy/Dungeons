@@ -1,9 +1,8 @@
-# Dungeons0.1
+# Dungeons1.0
 # author: Charles Kanoy
-# date: 1/22/2019
+# date: 2/10/2019
 
 import pygame
-import sys
 from numpy import *
 
 pygame.init()
@@ -30,36 +29,11 @@ square = height / scale
 level_count = 1
 
 
-class Level:
-    def __init__(self, player, enemy, door):
-        self.level = []
-        self.new = []
-
-        for i in range(scale):
-            for j in range(scale):
-                self.new.append(0)
-            self.level.append(self.new)
-            self.new = []
-
-        self.level[player.y][player.x] = 1
-        self.level[door.y][door.x] = 2
-        self.level[enemy.y][enemy.x] = 3
-
-    def print_level_arr(self):
-        for arr in self.level:
-            line = ""
-            for num in arr:
-                line += str(num) + " "
-            print(line)
-        print(level_count)
-        print('\n')
-
-
 def main():
     # display opening screen
     screen.fill(black)
-    text_to_screen(screen=screen, text="Welcome", x=120, y=175, color=white)
-    text_to_screen(screen, "Press space to continue", 100, 250, 20, white)
+    text_to_screen(screen=screen, text="Welcome", x=120, y=250, color=white)
+    text_to_screen(screen, "Press space to continue", 100, 400, 20, white)
     pygame.display.flip()
 
     while 1:
@@ -78,21 +52,18 @@ def main():
 
 # setup game variables
 def game_setup():
-    gamer = Player(random.randint(0, scale - 1), random.randint(0, scale - 1), 1, 1, horse_brown)
+    gamer = Player(random.randint(0, scale - 1), random.randint(0, scale - 1), 1, 5, horse_brown)
     door = Door(random.randint(0, scale - 1), random.randint(0, scale - 1), black)
-    vill = Enemy(random.randint(0, scale - 1), random.randint(0, scale - 1), 1, 1, red)
-
-    level = Level(gamer, vill, door)
-    level.print_level_arr()
+    vill = Enemy(random.randint(0, scale - 1), random.randint(0, scale - 1), 2, 1, red)
 
     global level_count
     level_count += 1
 
-    game_play(gamer, vill, door, level)
+    game_play(gamer, vill, door)
 
 
 # run game when player indicates
-def game_play(player, enemy, door, level):
+def game_play(player, enemy, door):
     while player.health > 0:
         # quit if necessary
         for event in pygame.event.get():
@@ -112,20 +83,39 @@ def game_play(player, enemy, door, level):
                 else:
                     player.move_player()
                     enemy.move(player)
-                    level.__init__(player, enemy, door)
-                    level.print_level_arr()
+
+                if player.x == enemy.x and player.y == enemy.y:
+                    player.health -= 1
 
             print_screen(screen, player, door, enemy)
+
+    game_over()
+
+
+def game_over():
+    screen.fill(black)
+    text_to_screen(screen, "Game Over", 90, 250, 50, white)
+    text_to_screen(screen, "Press space to continue", 100, 400, 20, white)
+    pygame.display.flip()
+
+    global level_count
+    level_count = 1
+
+    await_key()
 
 
 # display the level the player is on
 def show_level():
     global level_count
     screen.fill(black)
-    text_to_screen(screen=screen, text="Level " + str(level_count), x=140, y=175, color=white)
-    text_to_screen(screen, "Press space to continue", 100, 250, 20, white)
+    text_to_screen(screen=screen, text="Level " + str(level_count), x=140, y=250, color=white)
+    text_to_screen(screen, "Press space to continue", 100, 400, 20, white)
     pygame.display.flip()
 
+    await_key()
+
+
+def await_key():
     while 1:
         # quit if necessary
         for event in pygame.event.get():
@@ -153,7 +143,7 @@ def print_screen(screen, player, door, enemy):
     pygame.draw.rect(screen, black, outline)
 
     text_to_screen(screen, "Health", width / 2, height + 60, 20, green)
-    health_bar = pygame.rect.Rect(width / 2, height + 80, player.health * 100, 10)
+    health_bar = pygame.rect.Rect(width / 2, height + 80, player.health * 20, 10)
     pygame.draw.rect(screen, green, health_bar)
     pygame.display.flip()
 
