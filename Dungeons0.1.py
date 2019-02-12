@@ -3,6 +3,7 @@
 # date: 2/10/2019
 
 import pygame
+import sys
 from numpy import *
 
 pygame.init()
@@ -173,7 +174,8 @@ class Player(GameObject):
         self.health = health
 
     def draw(self):
-        pygame.draw.rect(screen, self.color, self.rect)
+        image = pygame.image.load('Data/hero.png')
+        screen.blit(image, self.rect)
 
     def move_player(self):
         actual = self.vel * square
@@ -212,7 +214,8 @@ class Enemy(GameObject):
         self.health = health
 
     def draw(self):
-        pygame.draw.rect(screen, self.color, self.rect)
+        image = pygame.image.load('Data/monster.png')
+        screen.blit(image, self.rect)
 
     def move(self, player):
         actual = self.vel * square
