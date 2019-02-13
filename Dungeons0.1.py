@@ -6,7 +6,14 @@ import pygame
 import sys
 from numpy import *
 
+pygame.mixer.pre_init(44100, 16, 2, 4096)
 pygame.init()
+
+
+# play background music
+pygame.mixer.music.load("Data/labyrinth-of-time.mp3")
+pygame.mixer.music.set_volume(.1)
+pygame.mixer.music.play(-1)
 
 # color palette
 black = (0, 0, 0)
@@ -28,6 +35,7 @@ screen = pygame.display.set_mode(size)
 scale = 10
 square = height / scale
 level_count = 1
+adder = 0
 
 
 def main():
@@ -53,12 +61,15 @@ def main():
 
 # setup game variables
 def game_setup():
+    # add base-game components
     gamer = Player(random.randint(0, scale - 1), random.randint(0, scale - 1), 1, 5, horse_brown)
     door = Door(random.randint(0, scale - 1), random.randint(0, scale - 1), black)
-    vill = Enemy(random.randint(0, scale - 1), random.randint(0, scale - 1), 2, 1, red)
 
-    global level_count
-    level_count += 1
+    # add enemies
+    vill = []
+    for i in range(adder):
+        enemy = Enemy(random.randint(0, scale - 1), random.randint(0, scale - 1), 2, 1, red)
+        vill.append(enemy)
 
     game_play(gamer, vill, door)
 
@@ -83,10 +94,11 @@ def game_play(player, enemy, door):
                     sys.exit()
                 else:
                     player.move_player()
-                    enemy.move(player)
-
-                if player.x == enemy.x and player.y == enemy.y:
-                    player.health -= 1
+                    for i in range(adder):
+                        enemy[i].move(player)
+                for i in range(adder):
+                    if player.x == enemy[i].x and player.y == enemy[i].y:
+                        player.health -= 1
 
             print_screen(screen, player, door, enemy)
 
@@ -102,12 +114,21 @@ def game_over():
     global level_count
     level_count = 1
 
+    global adder
+    adder = 0
     await_key()
 
 
 # display the level the player is on
 def show_level():
     global level_count
+    level_count += 1
+
+    # increase adder appropriately
+    global adder
+    if (level_count % 5) == 0:
+        adder += 1
+
     screen.fill(black)
     text_to_screen(screen=screen, text="Level " + str(level_count), x=140, y=250, color=white)
     text_to_screen(screen, "Press space to continue", 100, 400, 20, white)
@@ -134,10 +155,13 @@ def await_key():
 
 # prints objects on the screen
 def print_screen(screen, player, door, enemy):
+    global level_count
+
     screen.fill(green)
     player.draw()
     door.draw()
-    enemy.draw()
+    for i in range(adder):
+        enemy[i].draw()
 
     # draw player UI on bottom of screen
     outline = pygame.rect.Rect(0, height, width, 200)
@@ -146,6 +170,8 @@ def print_screen(screen, player, door, enemy):
     text_to_screen(screen, "Health", width / 2, height + 60, 20, green)
     health_bar = pygame.rect.Rect(width / 2, height + 80, player.health * 20, 10)
     pygame.draw.rect(screen, green, health_bar)
+
+    text_to_screen(screen, "Level " + str(level_count), width / 14, height + 60, 20, white)
     pygame.display.flip()
 
 
