@@ -92,6 +92,8 @@ def game_play(player, enemy, door):
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     sys.exit()
+                elif event.key == pygame.K_SPACE:
+                    player.fire(enemy, door)
                 else:
                     player.move_player()
                     for i in range(adder):
@@ -126,7 +128,7 @@ def show_level():
 
     # increase adder appropriately
     global adder
-    if (level_count % 5) == 0:
+    if (level_count % 1) == 0:
         adder += 1
 
     screen.fill(black)
@@ -190,6 +192,7 @@ class GameObject:
         self.y = y
         self.color = color
         self.rect = pygame.rect.Rect(self.x * square, self.y * square, square, square)
+        self.face = DOWN
 
 
 # defines player in game
@@ -201,6 +204,15 @@ class Player(GameObject):
 
     def draw(self):
         image = pygame.image.load('Data/hero.png')
+
+        # change sprite direction
+        if self.face == LEFT:
+            image = pygame.transform.rotate(image, 270)
+        elif self.face == UP:
+            image = pygame.transform.rotate(image, 180)
+        elif self.face == RIGHT:
+            image = pygame.transform.rotate(image, 90)
+
         screen.blit(image, self.rect)
 
     def move_player(self):
@@ -211,18 +223,59 @@ class Player(GameObject):
             if not (self.x <= 0):
                 self.rect.move_ip(-actual, 0)
                 self.x -= self.vel
-        if key[pygame.K_RIGHT]:
+                self.face = LEFT
+        elif key[pygame.K_RIGHT]:
             if not (self.x >= scale - self.vel):
                 self.rect.move_ip(actual, 0)
                 self.x += self.vel
-        if key[pygame.K_UP]:
+                self.face = RIGHT
+        elif key[pygame.K_UP]:
             if not (self.y <= 0):
                 self.rect.move_ip(0, -actual)
                 self.y -= self.vel
-        if key[pygame.K_DOWN]:
+                self.face = UP
+        elif key[pygame.K_DOWN]:
             if not (self.y >= scale - self.vel):
                 self.rect.move_ip(0, actual)
                 self.y += self.vel
+                self.face = DOWN
+
+    def fire(self, enemy, door):
+        ice_x = self.x
+        ice_y = self.y
+
+        if self.face == RIGHT:
+            while ice_x < height / square - 1 or not \
+                    (ice_x == enemy.x and ice_y == enemy.y):
+                ice_x += 1
+                self.draw_ice(ice_x, ice_y, enemy, door)
+        elif self.face == LEFT:
+            while ice_x > 0:
+                ice_x -= 1
+                self.draw_ice(ice_x, ice_y, enemy, door)
+        elif self.face == DOWN:
+            while ice_y < height / square - 1:
+                ice_y += 1
+                self.draw_ice(ice_x, ice_y, enemy, door)
+        elif self.face == UP:
+            while ice_y > 0:
+                ice_y -= 1
+                self.draw_ice(ice_x, ice_y, enemy, door)
+
+    def draw_ice(self, ice_x, ice_y, enemy, door):
+        # clock for firing
+        clock = pygame.time.Clock()
+
+        global screen
+        print_screen(screen, self, door, enemy)
+
+        ice_block = pygame.rect.Rect(ice_x * square, ice_y * square, square, square)
+
+        pygame.draw.rect(screen, blue, ice_block)
+        pygame.display.flip()
+
+        clock.tick(20)
+
 
 
 class Door(GameObject):
@@ -238,9 +291,19 @@ class Enemy(GameObject):
         GameObject.__init__(self, x, y, color)
         self.vel = vel
         self.health = health
+        self.face = DOWN
 
     def draw(self):
         image = pygame.image.load('Data/monster.png')
+
+        # change sprite direction
+        if self.face == LEFT:
+            image = pygame.transform.rotate(image, 270)
+        elif self.face == UP:
+            image = pygame.transform.rotate(image, 180)
+        elif self.face == RIGHT:
+            image = pygame.transform.rotate(image, 90)
+
         screen.blit(image, self.rect)
 
     def move(self, player):
@@ -252,15 +315,19 @@ class Enemy(GameObject):
             if self.x > player.x :
                 self.rect.move_ip(-actual, 0)
                 self.x -= self.vel
+                self.face = LEFT
             elif self.x < player.x:
                 self.rect.move_ip(actual, 0)
                 self.x += self.vel
+                self.face = RIGHT
         else:
             if self.y > player.y:
                 self.rect.move_ip(0, -actual)
                 self.y -= self.vel
+                self.face = UP
             elif self.y < player.y:
                 self.rect.move_ip(0, actual)
                 self.y += self.vel
+                self.face = DOWN
 
 main()
