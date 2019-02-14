@@ -68,7 +68,7 @@ def game_setup():
     # add enemies
     vill = []
     for i in range(adder):
-        enemy = Enemy(random.randint(0, scale - 1), random.randint(0, scale - 1), 2, 1, red)
+        enemy = Enemy(random.randint(0, scale - 1), random.randint(0, scale - 1), 2, 1, red, adder)
         vill.append(enemy)
 
     game_play(gamer, vill, door)
@@ -93,7 +93,8 @@ def game_play(player, enemy, door):
                 if event.key == pygame.K_ESCAPE:
                     sys.exit()
                 elif event.key == pygame.K_SPACE:
-                    player.fire(enemy, door)
+                    for i in range(adder):
+                        player.fire(enemy, door)
                 else:
                     player.move_player()
                     for i in range(adder):
@@ -245,20 +246,20 @@ class Player(GameObject):
         ice_y = self.y
 
         if self.face == RIGHT:
-            while ice_x < height / square - 1 or not \
-                    (ice_x == enemy.x and ice_y == enemy.y):
+            while ice_x < height / square - 1 and not self.check_overlap(enemy):
                 ice_x += 1
                 self.draw_ice(ice_x, ice_y, enemy, door)
+
         elif self.face == LEFT:
-            while ice_x > 0:
+            while ice_x > 0 and not self.check_overlap(enemy):
                 ice_x -= 1
                 self.draw_ice(ice_x, ice_y, enemy, door)
         elif self.face == DOWN:
-            while ice_y < height / square - 1:
+            while ice_y < height / square - 1 and not self.check_overlap(enemy):
                 ice_y += 1
                 self.draw_ice(ice_x, ice_y, enemy, door)
         elif self.face == UP:
-            while ice_y > 0:
+            while ice_y > 0 and not self.check_overlap(enemy):
                 ice_y -= 1
                 self.draw_ice(ice_x, ice_y, enemy, door)
 
@@ -276,6 +277,11 @@ class Player(GameObject):
 
         clock.tick(20)
 
+    def check_overlap(self, enemy):
+        for i in range(adder):
+            if enemy[i].x == self.x and enemy[i].y == self.y:
+                return True
+
 
 
 class Door(GameObject):
@@ -287,11 +293,18 @@ class Door(GameObject):
 
 
 class Enemy(GameObject):
-    def __init__(self, x, y, vel, health, color):
+    def __init__(self, x, y, vel, health, color, count):
         GameObject.__init__(self, x, y, color)
         self.vel = vel
         self.health = health
         self.face = DOWN
+        self.enemies = [count]
+
+    def __getitem__(self, index):
+        return self.enemies[index]
+
+    def __setitem__(self, index, value):
+        self.enemies.enemiesId[index] = value
 
     def draw(self):
         image = pygame.image.load('Data/monster.png')
