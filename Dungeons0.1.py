@@ -6,8 +6,11 @@ import pygame
 import sys
 from numpy import *
 
-pygame.mixer.pre_init(44100, 16, 2, 4096)
 pygame.init()
+pygame.mixer.pre_init(44100, 16, 2, 4096)
+image = pygame.image.load("Data/Hero.png")
+pygame.display.set_icon(image)
+pygame.display.set_caption("Dungeons")
 
 
 # play background music
@@ -68,7 +71,7 @@ def game_setup():
     # add enemies
     vill = []
     for i in range(adder):
-        enemy = Enemy(random.randint(0, scale - 1), random.randint(0, scale - 1), 2, 1, red, adder)
+        enemy = Enemy(random.randint(0, scale - 1), random.randint(0, scale - 1), 0, 1, red, adder)
         vill.append(enemy)
 
     game_play(gamer, vill, door)
@@ -93,8 +96,7 @@ def game_play(player, enemy, door):
                 if event.key == pygame.K_ESCAPE:
                     sys.exit()
                 elif event.key == pygame.K_SPACE:
-                    for i in range(adder):
-                        player.fire(enemy, door)
+                    player.fire(enemy, door)
                 else:
                     player.move_player()
                     for i in range(adder):
@@ -130,7 +132,7 @@ def show_level():
     # increase adder appropriately
     global adder
     if (level_count % 1) == 0:
-        adder += 1
+        adder = level_count
 
     screen.fill(black)
     text_to_screen(screen=screen, text="Level " + str(level_count), x=140, y=250, color=white)
@@ -246,22 +248,29 @@ class Player(GameObject):
         ice_y = self.y
 
         if self.face == RIGHT:
-            while ice_x < height / square - 1 and not self.check_overlap(enemy):
+            while ice_x < height / square - 1:
                 ice_x += 1
                 self.draw_ice(ice_x, ice_y, enemy, door)
-
+                if self.check_overlap(enemy):
+                    break
         elif self.face == LEFT:
-            while ice_x > 0 and not self.check_overlap(enemy):
+            while ice_x > 0:
                 ice_x -= 1
                 self.draw_ice(ice_x, ice_y, enemy, door)
+                if self.check_overlap(enemy):
+                    break
         elif self.face == DOWN:
-            while ice_y < height / square - 1 and not self.check_overlap(enemy):
+            while ice_y < height / square - 1:
                 ice_y += 1
                 self.draw_ice(ice_x, ice_y, enemy, door)
+                if self.check_overlap(enemy):
+                    break
         elif self.face == UP:
-            while ice_y > 0 and not self.check_overlap(enemy):
+            while ice_y > 0:
                 ice_y -= 1
                 self.draw_ice(ice_x, ice_y, enemy, door)
+                if self.check_overlap(enemy):
+                    break
 
     def draw_ice(self, ice_x, ice_y, enemy, door):
         # clock for firing
@@ -275,13 +284,16 @@ class Player(GameObject):
         pygame.draw.rect(screen, blue, ice_block)
         pygame.display.flip()
 
-        clock.tick(20)
+        clock.tick()
 
     def check_overlap(self, enemy):
+        global adder
+
         for i in range(adder):
             if enemy[i].x == self.x and enemy[i].y == self.y:
+                enemy.remove(enemy[i])
+                adder -= 1
                 return True
-
 
 
 class Door(GameObject):
