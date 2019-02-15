@@ -71,7 +71,7 @@ def game_setup():
     # add enemies
     vill = []
     for i in range(adder):
-        enemy = Enemy(random.randint(0, scale - 1), random.randint(0, scale - 1), 0, 1, red, adder)
+        enemy = Enemy(random.randint(0, scale - 1), random.randint(0, scale - 1), .05, 1, red, adder)
         vill.append(enemy)
 
     game_play(gamer, vill, door)
@@ -79,7 +79,10 @@ def game_setup():
 
 # run game when player indicates
 def game_play(player, enemy, door):
+    clock = pygame.time.Clock()
     while player.health > 0:
+        for i in range(adder):
+            enemy[i].move(player)
         # quit if necessary
         for event in pygame.event.get():
 
@@ -99,13 +102,12 @@ def game_play(player, enemy, door):
                     player.fire(enemy, door)
                 else:
                     player.move_player()
-                    for i in range(adder):
-                        enemy[i].move(player)
                 for i in range(adder):
                     if player.x == enemy[i].x and player.y == enemy[i].y:
                         player.health -= 1
 
             print_screen(screen, player, door, enemy)
+        clock.tick(60)
 
     game_over()
 
@@ -332,6 +334,7 @@ class Enemy(GameObject):
         screen.blit(image, self.rect)
 
     def move(self, player):
+
         actual = self.vel * square
         x_dist = abs(self.x - player.x)
         y_dist = abs(self.y - player.y)
@@ -354,5 +357,6 @@ class Enemy(GameObject):
                 self.rect.move_ip(0, actual)
                 self.y += self.vel
                 self.face = DOWN
+
 
 main()
