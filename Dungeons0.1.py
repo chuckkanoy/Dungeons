@@ -251,25 +251,25 @@ class Player(GameObject):
             while ice_x < height / square - 1:
                 ice_x += 1
                 self.draw_ice(ice_x, ice_y, enemy, door)
-                if self.check_overlap(enemy):
+                if self.check_overlap(enemy, ice_x, ice_y):
                     break
         elif self.face == LEFT:
             while ice_x > 0:
                 ice_x -= 1
                 self.draw_ice(ice_x, ice_y, enemy, door)
-                if self.check_overlap(enemy):
+                if self.check_overlap(enemy, ice_x, ice_y):
                     break
         elif self.face == DOWN:
             while ice_y < height / square - 1:
                 ice_y += 1
                 self.draw_ice(ice_x, ice_y, enemy, door)
-                if self.check_overlap(enemy):
+                if self.check_overlap(enemy, ice_x, ice_y):
                     break
         elif self.face == UP:
             while ice_y > 0:
                 ice_y -= 1
                 self.draw_ice(ice_x, ice_y, enemy, door)
-                if self.check_overlap(enemy):
+                if self.check_overlap(enemy, ice_x, ice_y):
                     break
 
     def draw_ice(self, ice_x, ice_y, enemy, door):
@@ -286,11 +286,11 @@ class Player(GameObject):
 
         clock.tick()
 
-    def check_overlap(self, enemy):
+    def check_overlap(self, enemy, ice_x, ice_y):
         global adder
 
         for i in range(adder):
-            if enemy[i].x == self.x and enemy[i].y == self.y:
+            if int(enemy[i].x) == ice_x and int(enemy[i].y) == ice_y:
                 enemy.remove(enemy[i])
                 adder -= 1
                 return True
