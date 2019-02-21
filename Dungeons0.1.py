@@ -4,6 +4,7 @@
 
 import pygame
 import sys
+from apscheduler.schedulers.background import BackgroundScheduler
 from numpy import *
 
 pygame.init()
@@ -40,6 +41,9 @@ square = height / scale
 level_count = 1
 adder = 0
 
+#scheduler
+sched = BackgroundScheduler()
+
 
 def main():
     # display opening screen
@@ -71,7 +75,7 @@ def game_setup():
     # add enemies
     vill = []
     for i in range(adder):
-        enemy = Enemy(random.randint(0, scale - 1), random.randint(0, scale - 1), .05, 1, red, adder)
+        enemy = Enemy(random.randint(0, scale - 1), random.randint(0, scale - 1), 2, 1, red, adder)
         vill.append(enemy)
 
     game_play(gamer, vill, door)
@@ -79,13 +83,12 @@ def game_setup():
 
 # run game when player indicates
 def game_play(player, enemy, door):
-    clock = pygame.time.Clock()
     while player.health > 0:
         for i in range(adder):
-            enemy[i].move(player)
+            sched.add_job(enemy[i].move(player), 'interval', seconds = 2)
+        sched.start()
         # quit if necessary
         for event in pygame.event.get():
-
             # change levels if landed on door
             if player.x == door.x and player.y == door.y:
                 show_level()
@@ -107,8 +110,6 @@ def game_play(player, enemy, door):
                         player.health -= 1
 
             print_screen(screen, player, door, enemy)
-        clock.tick(60)
-
     game_over()
 
 
@@ -334,13 +335,12 @@ class Enemy(GameObject):
         screen.blit(image, self.rect)
 
     def move(self, player):
-
         actual = self.vel * square
         x_dist = abs(self.x - player.x)
         y_dist = abs(self.y - player.y)
 
         if x_dist > y_dist:
-            if self.x > player.x :
+            if self.x > player.x:
                 self.rect.move_ip(-actual, 0)
                 self.x -= self.vel
                 self.face = LEFT
