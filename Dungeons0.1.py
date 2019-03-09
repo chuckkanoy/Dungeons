@@ -4,8 +4,9 @@
 
 import pygame
 import sys
-from apscheduler.schedulers.background import BackgroundScheduler
 from numpy import *
+from threading import Timer
+import tkinter as tk
 
 pygame.init()
 pygame.mixer.pre_init(44100, 16, 2, 4096)
@@ -39,10 +40,9 @@ screen = pygame.display.set_mode(size)
 scale = 10
 square = height / scale
 level_count = 1
+points = 0
 adder = 0
-
-#scheduler
-sched = BackgroundScheduler()
+health = 5
 
 
 def main():
@@ -69,13 +69,13 @@ def main():
 # setup game variables
 def game_setup():
     # add base-game components
-    gamer = Player(random.randint(0, scale - 1), random.randint(0, scale - 1), 1, 5, horse_brown)
     door = Door(random.randint(0, scale - 1), random.randint(0, scale - 1), black)
+    gamer = Player(random.randint(0, scale - 1), random.randint(0, scale - 1), 1, horse_brown)
 
     # add enemies
     vill = []
     for i in range(adder):
-        enemy = Enemy(random.randint(0, scale - 1), random.randint(0, scale - 1), 2, 1, red, adder)
+        enemy = Enemy(random.randint(0, scale - 1), random.randint(0, scale - 1), 1, 1, red, adder)
         vill.append(enemy)
 
     game_play(gamer, vill, door)
@@ -83,10 +83,10 @@ def game_setup():
 
 # run game when player indicates
 def game_play(player, enemy, door):
-    while player.health > 0:
-        for i in range(adder):
-            sched.add_job(enemy[i].move(player), 'interval', seconds = 2)
-        sched.start()
+    global adder
+    global health
+
+    while health > 0:
         # quit if necessary
         for event in pygame.event.get():
             # change levels if landed on door
@@ -106,14 +106,20 @@ def game_play(player, enemy, door):
                 else:
                     player.move_player()
                 for i in range(adder):
+                    enemy[i].move(player)
                     if player.x == enemy[i].x and player.y == enemy[i].y:
-                        player.health -= 1
+                        health -= 1
+                        enemy.remove(enemy[i])
+                        adder -= 1
+                        break
 
             print_screen(screen, player, door, enemy)
     game_over()
 
 
 def game_over():
+    global health
+    health = 5
     screen.fill(black)
     text_to_screen(screen, "Game Over", 90, 250, 50, white)
     text_to_screen(screen, "Press space to continue", 100, 400, 20, white)
@@ -175,11 +181,13 @@ def print_screen(screen, player, door, enemy):
     outline = pygame.rect.Rect(0, height, width, 200)
     pygame.draw.rect(screen, black, outline)
 
-    text_to_screen(screen, "Health", width / 2, height + 60, 20, green)
-    health_bar = pygame.rect.Rect(width / 2, height + 80, player.health * 20, 10)
+    text_to_screen(screen, "Health", width / 2, height + 60, 20, white)
+    health_bar = pygame.rect.Rect(width / 2, height + 80, health * 20, 10)
     pygame.draw.rect(screen, green, health_bar)
 
     text_to_screen(screen, "Level " + str(level_count), width / 14, height + 60, 20, white)
+
+    text_to_screen(screen, "Points " + str(points), width / 14, height + 90, 20, white)
     pygame.display.flip()
 
 
@@ -203,10 +211,9 @@ class GameObject:
 
 # defines player in game
 class Player(GameObject):
-    def __init__(self, x, y, vel, health, color):
+    def __init__(self, x, y, vel, color):
         GameObject.__init__(self, x, y, color)
         self.vel = vel
-        self.health = health
 
     def draw(self):
         image = pygame.image.load('Data/hero.png')
@@ -291,11 +298,12 @@ class Player(GameObject):
 
     def check_overlap(self, enemy, ice_x, ice_y):
         global adder
-
+        global points
         for i in range(adder):
             if int(enemy[i].x) == ice_x and int(enemy[i].y) == ice_y:
                 enemy.remove(enemy[i])
                 adder -= 1
+                points += 1
                 return True
 
 
