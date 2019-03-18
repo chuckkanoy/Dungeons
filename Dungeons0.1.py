@@ -39,16 +39,20 @@ size = height, width = 500, 700
 screen = pygame.display.set_mode(size)
 scale = 10
 square = height / scale
+
+# global game variables
 level_count = 1
 points = 0
 adder = 0
 health = 5
+playerName = ""
 
 
 def main():
+    global playerName
     # display opening screen
     screen.fill(black)
-    text_to_screen(screen=screen, text="Welcome", x=120, y=250, color=white)
+    text_to_screen(screen=screen, text="Dungeons", x=100, y=250, color=white)
     text_to_screen(screen, "Press space to continue", 100, 400, 20, white)
     pygame.display.flip()
 
@@ -60,10 +64,37 @@ def main():
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     sys.exit()
+                elif event.key == pygame.K_SPACE:
+                    get_init()
 
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:
+
+def get_init():
+    # get player initials
+    global playerName
+    # display opening screen
+    screen.fill(black)
+    text_to_screen(screen=screen, text="Enter Initials", x=40, y=250, color=white)
+    pygame.display.flip()
+
+    while 1:
+        # quit if necessary
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    sys.exit()
+                elif event.unicode.isalpha():
+                    playerName += event.unicode
+                elif event.key == pygame.K_BACKSPACE:
+                    playerName = playerName[:-1]
+                elif event.key == pygame.K_SPACE:
                     game_setup()
+                # show key input as it happens on screen
+                screen.fill(black)
+                text_to_screen(screen=screen, text="Enter Initials", x=40, y=250, color=white)
+                text_to_screen(screen=screen, text=playerName, x=40, y=350, color=white)
+                pygame.display.flip()
 
 
 # setup game variables
@@ -79,6 +110,14 @@ def game_setup():
         vill.append(enemy)
 
     game_play(gamer, vill, door)
+
+
+def write_score():
+    global points
+    global playerName
+
+    file = open("Data/scores.txt", "a")
+    file.write(str(points))
 
 
 # run game when player indicates
@@ -118,8 +157,16 @@ def game_play(player, enemy, door):
 
 
 def game_over():
+    write_score()
+
+    # declare and adjust global variables
     global health
+    global points
+    global playerName
+    playerName = ""
+    points = 0
     health = 5
+
     screen.fill(black)
     text_to_screen(screen, "Game Over", 90, 250, 50, white)
     text_to_screen(screen, "Press space to continue", 100, 400, 20, white)
@@ -170,6 +217,7 @@ def await_key():
 # prints objects on the screen
 def print_screen(screen, player, door, enemy):
     global level_count
+    global playerName
 
     screen.fill(green)
     player.draw()
@@ -180,6 +228,7 @@ def print_screen(screen, player, door, enemy):
     # draw player UI on bottom of screen
     outline = pygame.rect.Rect(0, height, width, 200)
     pygame.draw.rect(screen, black, outline)
+    text_to_screen(screen, playerName, width / 14, height + 20, 20, white)
 
     text_to_screen(screen, "Health", width / 2, height + 60, 20, white)
     health_bar = pygame.rect.Rect(width / 2, height + 80, health * 20, 10)
