@@ -7,6 +7,7 @@ import sys
 from numpy import *
 from threading import Timer
 import tkinter as tk
+from operator import itemgetter
 
 pygame.init()
 pygame.mixer.pre_init(44100, 16, 2, 4096)
@@ -117,7 +118,7 @@ def write_score():
     global playerName
 
     file = open("Data/scores.txt", "a")
-    file.write(str(points))
+    file.write(playerName + " " + str(points) + "\n")
 
 
 # run game when player indicates
@@ -158,6 +159,7 @@ def game_play(player, enemy, door):
 
 def game_over():
     write_score()
+    sort_scores()
 
     # declare and adjust global variables
     global health
@@ -198,6 +200,19 @@ def show_level():
     await_key()
 
 
+def sort_scores():
+    with open("Data/scores.txt") as f:
+        lines = [line.split(' ') for line in f]
+    output = open("Data/scores.txt", "w")
+
+    for line in sorted(lines, key=itemgetter(1), reverse=True):
+        output.write(' '.join(line))
+
+    output.close()
+
+# def show_scores():
+
+
 def await_key():
     while 1:
         # quit if necessary
@@ -207,10 +222,7 @@ def await_key():
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     sys.exit()
-
-            # handle the next move
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:
+                elif event.key == pygame.K_SPACE:
                     game_setup()
 
 
