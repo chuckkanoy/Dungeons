@@ -8,6 +8,8 @@ from numpy import *
 from threading import Timer
 import tkinter as tk
 from operator import itemgetter
+from iteration_utilities import chained
+from functools import partial
 
 pygame.init()
 pygame.mixer.pre_init(44100, 16, 2, 4096)
@@ -125,7 +127,7 @@ def write_score():
 def game_play(player, enemy, door):
     global adder
     global health
-
+    show_scores()
     while health > 0:
         # quit if necessary
         for event in pygame.event.get():
@@ -179,7 +181,16 @@ def game_over():
 
     global adder
     adder = 0
-    await_key()
+    while 1:
+        # quit if necessary
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    sys.exit()
+                elif event.key == pygame.K_SPACE:
+                    show_scores()
 
 
 # display the level the player is on
@@ -205,12 +216,31 @@ def sort_scores():
         lines = [line.split(' ') for line in f]
     output = open("Data/scores.txt", "w")
 
-    for line in sorted(lines, key=itemgetter(1), reverse=True):
+    itemgetter_int = chained(operator.itemgetter(0, 1), partial(map, int), tuple)
+    for line in sorted(lines, key=itemgetter_int(1), reverse=True):
         output.write(' '.join(line))
 
     output.close()
 
-# def show_scores():
+
+def show_scores():
+    sort_scores()
+    # read in file
+    f = open("Data/scores.txt")
+    line = f.readline()
+
+    # fill in screen with details
+    screen.fill(black)
+    text_to_screen(screen=screen, text="Scores", x=130, y=100, color=white)
+    height_win = 180
+    for i in range(5):
+        text_to_screen(screen=screen, text=line.replace("\n", ""), x=140, y=height_win, color=white)
+        line = f.readline()
+        height_win += 60
+    text_to_screen(screen, "Press space to continue", 100, 600, 20, white)
+    pygame.display.flip()
+
+    await_key()
 
 
 def await_key():
