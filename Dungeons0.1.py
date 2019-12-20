@@ -51,6 +51,7 @@ health = 5
 playerName = ""
 
 
+# main method called to begin game actions
 def main():
     global playerName
     # display opening screen
@@ -71,6 +72,7 @@ def main():
                     get_init()
 
 
+# initialize game space and playerName
 def get_init():
     # get player initials
     global playerName
@@ -115,19 +117,11 @@ def game_setup():
     game_play(gamer, vill, door)
 
 
-def write_score():
-    global points
-    global playerName
-
-    file = open("Data/scores.txt", "a")
-    file.write(playerName + " " + str(points) + "\n")
-
-
 # run game when player indicates
 def game_play(player, enemy, door):
     global adder
     global health
-    show_scores()
+    # show_scores() NO NEED TO SHOW HIGH SCORES BEFORE GAME STARTS
     while health > 0:
         # quit if necessary
         for event in pygame.event.get():
@@ -159,9 +153,10 @@ def game_play(player, enemy, door):
     game_over()
 
 
+# handle what happens upon player death
 def game_over():
     write_score()
-    sort_scores()
+    #sort_scores() NO NEED TO SORT SCORE; WILL ALREADY BE DONE IN SHOW_SCORE
 
     # declare and adjust global variables
     global health
@@ -211,6 +206,7 @@ def show_level():
     await_key()
 
 
+# UNFINISHED: sort scores in text document
 def sort_scores():
     with open("Data/scores.txt") as f:
         lines = [line.split(' ') for line in f]
@@ -223,8 +219,18 @@ def sort_scores():
     output.close()
 
 
+# write scores to a text document
+def write_score():
+    global points
+    global playerName
+
+    file = open("Data/scores.txt", "a")
+    file.write(playerName + " " + str(points) + "\n")
+
+
+# display scores to screen
 def show_scores():
-    sort_scores()
+    #sort_scores()
     # read in file
     f = open("Data/scores.txt")
     line = f.readline()
@@ -243,6 +249,7 @@ def show_scores():
     await_key()
 
 
+# waits for player to enter a specific key to followup with action
 def await_key():
     while 1:
         # quit if necessary
@@ -291,6 +298,7 @@ def text_to_screen(screen, text, x, y, size=50,
     screen.blit(text, (x, y))
 
 
+# create base game object class for inheritance
 class GameObject:
     def __init__(self, x, y, color):
         self.x = x
@@ -306,8 +314,9 @@ class Player(GameObject):
         GameObject.__init__(self, x, y, color)
         self.vel = vel
 
+    # draws player to screen
     def draw(self):
-        image = pygame.image.load('Data/hero.png')
+        image = pygame.image.load('Data/hero.png')  # adjust as needed if file changes
 
         # change sprite direction
         if self.face == LEFT:
@@ -319,6 +328,7 @@ class Player(GameObject):
 
         screen.blit(image, self.rect)
 
+    # handle what happens when player pushes keys
     def move_player(self):
         actual = self.vel * square
 
@@ -344,6 +354,7 @@ class Player(GameObject):
                 self.y += self.vel
                 self.face = DOWN
 
+    # handle space bar use
     def fire(self, enemy, door):
         ice_x = self.x
         ice_y = self.y
@@ -352,27 +363,28 @@ class Player(GameObject):
             while ice_x < height / square - 1:
                 ice_x += 1
                 self.draw_ice(ice_x, ice_y, enemy, door)
-                if self.check_overlap(enemy, ice_x, ice_y):
+                if self.check_collision(enemy, ice_x, ice_y):
                     break
         elif self.face == LEFT:
             while ice_x > 0:
                 ice_x -= 1
                 self.draw_ice(ice_x, ice_y, enemy, door)
-                if self.check_overlap(enemy, ice_x, ice_y):
+                if self.check_collision(enemy, ice_x, ice_y):
                     break
         elif self.face == DOWN:
             while ice_y < height / square - 1:
                 ice_y += 1
                 self.draw_ice(ice_x, ice_y, enemy, door)
-                if self.check_overlap(enemy, ice_x, ice_y):
+                if self.check_collision(enemy, ice_x, ice_y):
                     break
         elif self.face == UP:
             while ice_y > 0:
                 ice_y -= 1
                 self.draw_ice(ice_x, ice_y, enemy, door)
-                if self.check_overlap(enemy, ice_x, ice_y):
+                if self.check_collision(enemy, ice_x, ice_y):
                     break
 
+    # UNFINISHED: shows animation for player firing
     def draw_ice(self, ice_x, ice_y, enemy, door):
         # clock for firing
         clock = pygame.time.Clock()
@@ -387,7 +399,8 @@ class Player(GameObject):
 
         clock.tick()
 
-    def check_overlap(self, enemy, ice_x, ice_y):
+    # checks for collisions
+    def check_collision(self, enemy, ice_x, ice_y):
         global adder
         global points
         for i in range(adder):
@@ -398,14 +411,17 @@ class Player(GameObject):
                 return True
 
 
+# class for movement between levels
 class Door(GameObject):
     def __init__(self, x, y, color):
         GameObject.__init__(self, x, y, color)
 
+    # draws door (hole)
     def draw(self):
         pygame.draw.ellipse(screen, self.color, self.rect)
 
 
+# class for enemy objects
 class Enemy(GameObject):
     def __init__(self, x, y, vel, health, color, count):
         GameObject.__init__(self, x, y, color)
@@ -420,6 +436,7 @@ class Enemy(GameObject):
     def __setitem__(self, index, value):
         self.enemies.enemiesId[index] = value
 
+    # draws individual enemy
     def draw(self):
         image = pygame.image.load('Data/monster.png')
 
@@ -433,6 +450,7 @@ class Enemy(GameObject):
 
         screen.blit(image, self.rect)
 
+    # UNFINISHED: handle enemy pursuing player; want it timed
     def move(self, player):
         actual = self.vel * square
         x_dist = abs(self.x - player.x)
