@@ -8,7 +8,7 @@ from numpy import *
 from threading import Timer
 import tkinter as tk
 from operator import itemgetter
-from iteration_utilities import chained
+# from iteration_utilities import chained
 from functools import partial
 
 pygame.init()
@@ -19,9 +19,9 @@ pygame.display.set_caption("Dungeons")
 
 
 # play background music
-pygame.mixer.music.load("Data/labyrinth-of-time.mp3")
+"""pygame.mixer.music.load("Data/labyrinth-of-time.mp3")
 pygame.mixer.music.set_volume(.1)
-pygame.mixer.music.play(-1)
+pygame.mixer.music.play(-1)"""
 
 # color palette
 black = (0, 0, 0)
@@ -49,6 +49,21 @@ points = 0
 adder = 0
 health = 5
 playerName = ""
+board = [[0 for x in range(10)] for y in range(10)]
+
+
+# initialize array board
+def board_init():
+    for i in range(10):
+        for j in range(10):
+            board[i][j] = 0
+
+
+# display array board
+def print_board():
+    print('\n'.join([''.join(['{:4}'.format(item) for item in row])
+                     for row in board]))
+    print('\n')
 
 
 # main method called to begin game actions
@@ -69,7 +84,7 @@ def main():
                 if event.key == pygame.K_ESCAPE:
                     sys.exit()
                 elif event.key == pygame.K_SPACE:
-                    get_init()
+                    game_setup()
 
 
 # initialize game space and playerName
@@ -81,7 +96,8 @@ def get_init():
     text_to_screen(screen=screen, text="Enter Initials", x=40, y=250, color=white)
     pygame.display.flip()
 
-    while 1:
+    # allow player to only enter 3 characters for initials
+    while len(playerName) != 3:
         # quit if necessary
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -93,13 +109,14 @@ def get_init():
                     playerName += event.unicode
                 elif event.key == pygame.K_BACKSPACE:
                     playerName = playerName[:-1]
-                elif event.key == pygame.K_SPACE:
-                    game_setup()
                 # show key input as it happens on screen
                 screen.fill(black)
                 text_to_screen(screen=screen, text="Enter Initials", x=40, y=250, color=white)
                 text_to_screen(screen=screen, text=playerName, x=40, y=350, color=white)
                 pygame.display.flip()
+
+    # setup game based on input
+    game_setup()
 
 
 # setup game variables
@@ -122,15 +139,17 @@ def game_play(player, enemy, door):
     global adder
     global health
     # show_scores() NO NEED TO SHOW HIGH SCORES BEFORE GAME STARTS
+    print_board()
     while health > 0:
-        # quit if necessary
+        # handle every event
         for event in pygame.event.get():
             # change levels if landed on door
             if player.x == door.x and player.y == door.y:
                 show_level()
                 game_setup()
 
-            if event.type == pygame.QUIT:
+            # quit if necessary
+            elif event.type == pygame.QUIT:
                 sys.exit()
 
             # handle keys
@@ -148,15 +167,15 @@ def game_play(player, enemy, door):
                         enemy.remove(enemy[i])
                         adder -= 1
                         break
-
-            print_screen(screen, player, door, enemy)
+                print_screen(screen, player, door, enemy)
+                board_init()
     game_over()
 
 
 # handle what happens upon player death
 def game_over():
     write_score()
-    #sort_scores() NO NEED TO SORT SCORE; WILL ALREADY BE DONE IN SHOW_SCORE
+    # sort_scores() NO NEED TO SORT SCORE; WILL ALREADY BE DONE IN SHOW_SCORE
 
     # declare and adjust global variables
     global health
@@ -230,7 +249,7 @@ def write_score():
 
 # display scores to screen
 def show_scores():
-    #sort_scores()
+    # sort_scores()
     # read in file
     f = open("Data/scores.txt")
     line = f.readline()
@@ -274,6 +293,8 @@ def print_screen(screen, player, door, enemy):
     for i in range(adder):
         enemy[i].draw()
 
+    print_board()
+
     # draw player UI on bottom of screen
     outline = pygame.rect.Rect(0, height, width, 200)
     pygame.draw.rect(screen, black, outline)
@@ -313,6 +334,8 @@ class Player(GameObject):
     def __init__(self, x, y, vel, color):
         GameObject.__init__(self, x, y, color)
         self.vel = vel
+        # change board variable
+        board[y][x] = 1
 
     # draws player to screen
     def draw(self):
@@ -353,6 +376,9 @@ class Player(GameObject):
                 self.rect.move_ip(0, actual)
                 self.y += self.vel
                 self.face = DOWN
+
+        # change board variable
+        board[self.y][self.x] = 1
 
     # handle space bar use
     def fire(self, enemy, door):
@@ -419,6 +445,8 @@ class Door(GameObject):
     # draws door (hole)
     def draw(self):
         pygame.draw.ellipse(screen, self.color, self.rect)
+        # change board variable
+        board[self.y][self.x] = 2
 
 
 # class for enemy objects
@@ -474,6 +502,8 @@ class Enemy(GameObject):
                 self.rect.move_ip(0, actual)
                 self.y += self.vel
                 self.face = DOWN
+
+        board[self.y][self.x] = 3
 
 
 main()
