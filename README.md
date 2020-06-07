@@ -1,5 +1,5 @@
 # Dungeons
-This a arcade dungeon crawler type of game.
+This an arcade dungeon crawler type of game.
 
 ## Intallation
 If you do not have python installed on your computer, you can download it here: [Python](https://www.python.org/downloads/)<br/>
