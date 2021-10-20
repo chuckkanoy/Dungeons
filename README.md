@@ -1,7 +1,7 @@
 # Dungeons
 This an arcade dungeon crawler type of game.
 
-## Intallation
+## Installation
 If you do not have python installed on your computer, you can download it here: [Python](https://www.python.org/downloads/)<br/>
 After that, you'll need a package installer. You can download that here: [PIP](https://pypi.org/project/pip/)<br/>
 Finally, clone this project to your computer using the following commands:
