@@ -13,7 +13,7 @@ If necessary, use the package installer (pip, pip3, etc.) to install the depende
 ## Usage
 ```
 cd Dungeons
-python Dungeons.py
+python main.py
 ```
 *(note: if python command doesn't work, try python3)*
 
