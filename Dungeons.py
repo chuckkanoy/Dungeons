@@ -1,6 +1,6 @@
-# Dungeons1.0
+# project: Dungeons
 # author: Charles Kanoy
-# date: 2/10/2019
+# version: 1.0.0
 
 import pygame
 import sys
