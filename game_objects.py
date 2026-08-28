@@ -53,30 +53,23 @@ class Player(GameObject):
         interface.screen.blit(image, self.rect)
 
     # handle what happens when player pushes keys
-    def move_player(self, barrier):
-        actual = self.vel * interface.square
-
-        key = pygame.key.get_pressed()
-        if key[pygame.K_LEFT]:
-            if not (self.x <= 0) and (self.y != barrier.y or self.x - 1 != barrier.x):
-                self.rect.move_ip(-actual, 0)
-                self.x -= self.vel
-                self.face = interface.LEFT
-        elif key[pygame.K_RIGHT]:
-            if not (self.x >= interface.scale - self.vel) and (self.y != barrier.y or self.x + 1 != barrier.x):
-                self.rect.move_ip(actual, 0)
-                self.x += self.vel
-                self.face = interface.RIGHT
-        elif key[pygame.K_UP]:
-            if not (self.y <= 0) and (self.y - 1 != barrier.y or self.x != barrier.x):
-                self.rect.move_ip(0, -actual)
-                self.y -= self.vel
-                self.face = interface.UP
-        elif key[pygame.K_DOWN]:
-            if not (self.y >= interface.scale - self.vel) and (self.y + 1 != barrier.y or self.x != barrier.x):
-                self.rect.move_ip(0, actual)
-                self.y += self.vel
-                self.face = interface.DOWN
+    def move(self, direction):
+        if direction == interface.UP and self.y > 0:
+            self.rect.move_ip(0, -self.vel * interface.square)
+            self.y -= self.vel
+            self.face = interface.UP
+        elif direction == interface.DOWN and self.y < interface.scale - 1:
+            self.rect.move_ip(0, self.vel * interface.square)
+            self.y += self.vel
+            self.face = interface.DOWN
+        elif direction == interface.LEFT and self.x > 0:
+            self.rect.move_ip(-self.vel * interface.square, 0)
+            self.x -= self.vel
+            self.face = interface.LEFT
+        elif direction == interface.RIGHT and self.x < interface.scale - 1:
+            self.rect.move_ip(self.vel * interface.square, 0)
+            self.x += self.vel
+            self.face = interface.RIGHT
 
         # change board variable
         board[self.y][self.x] = 1

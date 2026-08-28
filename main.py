@@ -7,11 +7,14 @@ from py_compile import main
 import pygame
 import sys
 import random
+from time import sleep
 
 # user defined files
 import interface
 from interface import text_to_screen, display_transition_screen, print_screen
 from game_objects import Door, Player, Barrier, Health, Treasure, Enemy
+
+OFF_CAMERA = 1000
 
 class GameCabinet:
     num_barriers = 0
@@ -22,6 +25,7 @@ class GameCabinet:
     vill = []
     door = Door(random.randint(0, interface.scale - 1), random.randint(0, interface.scale - 1), interface.black)
     powerup = []
+    game_objects = []
     barrier = Barrier()
 
     # main method called to begin game actions
@@ -30,9 +34,10 @@ class GameCabinet:
         interface.load_interface()
         interface.play_background_music()
         
+        interface.display_transition_screen("Dungeons")
+        
         while self.is_game_running():
-            self.get_init()
-            self.game_setup()
+            self.setup_level()
             self.game_play()
 
     def is_game_running(self):
@@ -40,22 +45,11 @@ class GameCabinet:
         
         if self.player.health <= 0:
             retVal = False
-        
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                retVal = False
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    retVal = False
                     
         return retVal
         
     # initialize game space and name
-    def get_init(self):
-        # get player initials
-        
-        display_transition_screen("Dungeons")
-
+    def get_player_data(self):
         # allow player to only enter 3 characters for initials
         while len(self.player.name) != 3:
             # quit if necessary
@@ -74,9 +68,10 @@ class GameCabinet:
 
 
     # setup game variables
-    def game_setup(self):
+    def setup_level(self):
         while self.player.x == self.door.x and self.player.y == self.door.y:
             self.door = Door(random.randint(0, interface.scale - 1), random.randint(0, interface.scale - 1), interface.black)
+        self.game_objects = [self.player, self.door]
         # add power interface.UP depending on random
         appears = random.randint(0, 100)
         if 0 <= appears <= 50:
@@ -84,9 +79,9 @@ class GameCabinet:
         else:
             choice = random.randint(0, self.num_possible_power_ups)
             if choice == 0:
-                self.powerup = [Health()]
+                self.game_objects += [Health()]
             else:
-                self.powerup = [Treasure()]
+                self.game_objects += [Treasure()]
 
         # add enemies
         vill = []
@@ -94,6 +89,7 @@ class GameCabinet:
             for i in range(self.enemy_increase_rate):
                 enemy = Enemy(random.randint(0, interface.scale - 1), random.randint(0, interface.scale - 1), 1, 1, interface.red, self.enemy_increase_rate)
                 vill.append(enemy)
+                self.game_objects += [enemy]
 
         barrier = Barrier()
         # for j in range(num_barriers):
@@ -106,40 +102,19 @@ class GameCabinet:
                 while (vill[i].x == barrier.x and vill[i].y == barrier.y) or \
                         (self.player.x == barrier.x and self.player.y == barrier.y) or (self.door.x == barrier.x and self.door.y == barrier.y):
                     barrier = Barrier()
+        self.game_objects += [barrier]
 
 
     # run game when player indicates
     def game_play(self):
         # print_board() used when displaying array being saved
         while self.is_game_running():
-            # handle every event
-            for event in pygame.event.get():
-                # change levels if landed on door
-                if self.player.x == self.door.x and self.player.y == self.door.y:
-                    self.show_level()
-                    self.game_setup()
-
-                # quit if necessary
-                elif event.type == pygame.QUIT:
-                    sys.exit()
-
-                # handle keys
-                elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
-                        sys.exit()
-                    elif event.key == pygame.K_SPACE:
-                        self.player.fire(self.vill, self.door)
-                    else:
-                        # for i in range(num_barriers):
-                        self.player.move_player(self.barrier)
-                        if len(self.powerup) != 0:
-                            if self.powerup[0].check_collision(self.player):
-                                self.powerup[0].boost(self.player)
-                                self.powerup.remove(self.powerup[0])
-                        # for i in range(num_barriers):
-                        self.player.run_enemy(self.vill, self.barrier, self.level)
-                    print_screen(interface.screen, self.player, self.door, self.vill, self.powerup, self.barrier, self.level)
-                    # board_init() used when displaying array being saved
+            interface.print_screen(interface.screen, self.player, self.door, self.vill, self.powerup, self.barrier, self.level)
+            interface.handle_user_input(self.player)
+            for obj in self.game_objects:
+                self.handle_object_collision(obj)
+            sleep(0.01)
+            # self.transition_level()
         self.game_over()
 
 
@@ -161,19 +136,24 @@ class GameCabinet:
 
         global enemy_increase_rate
         enemy_increase_rate = 0
+        
+        self.get_player_data()
                         
         self.show_scores()
 
 
     # display the level the player is on
-    def show_level(self):
+    def transition_level(self):
         self.level += 1
 
         # increase enemy_increase_rate appropriately
         if (self.level % 5) == 0:
             self.enemy_increase_rate += 1
-
-        display_transition_screen("Level " + str(self.level))
+            
+        self.setup_level()
+        print("transition level")
+        
+        interface.display_transition_screen("Level " + str(self.level))
 
 
     # sort scores in text document
@@ -225,6 +205,19 @@ class GameCabinet:
             interface.height_win += 60
         text_to_screen(screen=interface.screen, text="Press space to continue", x=100, y=600, color=interface.white)
         pygame.display.flip()
+    
+    def handle_object_collision(self, obj):
+        if self.player.x == obj.x and self.player.y == obj.y:
+            if isinstance(obj, Health):
+                self.player.health += 1
+            elif isinstance(obj, Treasure):
+                self.player.points += 5
+                Treasure.x = OFF_CAMERA
+                Treasure.y = OFF_CAMERA
+            elif isinstance(obj, Enemy):
+                self.player.health -= 1
+            elif isinstance(obj, Door):
+                self.transition_level()
 
 
 if __name__ == "__main__":

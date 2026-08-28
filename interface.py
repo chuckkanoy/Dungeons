@@ -1,4 +1,6 @@
 import pygame
+import sys
+import time
 
 # screen
 size = height, width = 500, 700
@@ -49,6 +51,19 @@ def display_transition_screen(text1, text2 = "Press space to continue"):
     text_to_screen(screen=screen, text=text2, x=100, y=400, color=white)
     pygame.display.flip()
     
+    while True:
+        print("Waiting for space bar to be pressed")
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    sys.exit()
+                elif event.key == pygame.K_SPACE:
+                    print("Space bar pressed")
+                    return
+        time.sleep(0.01)
+    
 # prints objects on the screen
 def print_screen(screen, player, door, enemy, powerup, barrier, level):
     screen.fill(green)
@@ -79,3 +94,21 @@ def print_screen(screen, player, door, enemy, powerup, barrier, level):
 
     text_to_screen(screen=screen, text="Points " + str(player.points), x=width / 14, y=height + 90, color=white)
     pygame.display.flip()
+    
+def handle_user_input(player):
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            sys.exit()
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                sys.exit()
+            elif event.key == pygame.K_UP:
+                player.move(UP)
+            elif event.key == pygame.K_DOWN:
+                player.move(DOWN)
+            elif event.key == pygame.K_LEFT:
+                player.move(LEFT)
+            elif event.key == pygame.K_RIGHT:
+                player.move(RIGHT)
+            elif event.key == pygame.K_SPACE:
+                player.setIsWaiting(False)
