@@ -2,6 +2,9 @@ import pygame
 import sys
 import time
 
+from game_objects import Barrier
+import interface
+
 # screen
 size = height, width = 500, 700
 screen = pygame.display.set_mode(size)
@@ -44,15 +47,14 @@ def text_to_screen(screen, text, x, y, size=40,
     text = font.render(text, True, color)
     screen.blit(text, (x, y))
     
-def display_transition_screen(text1, text2 = "Press space to continue"):
+def display_transition_screen(text1, text2 = "Press space to continue", await_space=True):
     # display transition screen
     screen.fill(black)
     text_to_screen(screen=screen, text=text1, x=100, y=250, color=white)
     text_to_screen(screen=screen, text=text2, x=100, y=400, color=white)
     pygame.display.flip()
     
-    while True:
-        print("Waiting for space bar to be pressed")
+    while await_space:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()
@@ -60,34 +62,28 @@ def display_transition_screen(text1, text2 = "Press space to continue"):
                 if event.key == pygame.K_ESCAPE:
                     sys.exit()
                 elif event.key == pygame.K_SPACE:
-                    print("Space bar pressed")
                     return
         time.sleep(0.01)
     
 # prints objects on the screen
-def print_screen(screen, player, door, enemy, powerup, barrier, level):
+def print_screen(screen, player, game_objects, level):
     screen.fill(green)
-    player.draw()
-    door.draw()
-    if len(powerup) != 0:
-        powerup[0].draw()
-
-    if level != 1:
-        for i in range(len(enemy)):
-            enemy[i].draw()
-
-    """for i in range(num_barriers):
-        print(num_barriers + " " + i)
-        barriers[i].draw()"""
-    barrier.draw()
+    if len(game_objects) != 0:
+        for obj in game_objects:
+            if isinstance(obj, list):
+                for item in obj:
+                    item.draw()
+            else:
+                obj.draw()
 
     # draw player UI on bottom of screen
     outline = pygame.rect.Rect(0, height, width, 200)
     pygame.draw.rect(screen, black, outline)
-    text_to_screen(screen=screen, text=player.name, x=width / 14, y=height + 20, color=white)
 
     text_to_screen(screen=screen, text="Health", x=width / 2, y=height + 60, color=white)
-    health_bar = pygame.rect.Rect(width / 2, height + 80, player.health * 20, 10)
+    health_bar = pygame.rect.Rect(width / 2, height + 80, player.health, 10)
+    max_health = pygame.rect.Rect(width / 2, height + 80, 100, 10)
+    pygame.draw.rect(screen, white, max_health)
     pygame.draw.rect(screen, green, health_bar)
 
     text_to_screen(screen=screen, text="Level " + str(level), x=width / 14, y=height + 60, color=white)
@@ -95,7 +91,7 @@ def print_screen(screen, player, door, enemy, powerup, barrier, level):
     text_to_screen(screen=screen, text="Points " + str(player.points), x=width / 14, y=height + 90, color=white)
     pygame.display.flip()
     
-def handle_user_input(player):
+def handle_user_input(player, object_map):
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             sys.exit()
@@ -103,12 +99,14 @@ def handle_user_input(player):
             if event.key == pygame.K_ESCAPE:
                 sys.exit()
             elif event.key == pygame.K_UP:
-                player.move(UP)
+                if not isinstance(object_map[player.y - 1][player.x], Barrier):
+                    player.move(UP)
             elif event.key == pygame.K_DOWN:
-                player.move(DOWN)
+                if (player.y + 1 < interface.scale) and (not isinstance(object_map[player.y + 1][player.x], Barrier)):
+                    player.move(DOWN)
             elif event.key == pygame.K_LEFT:
-                player.move(LEFT)
+                if not isinstance(object_map[player.y][player.x - 1], Barrier):
+                    player.move(LEFT)
             elif event.key == pygame.K_RIGHT:
-                player.move(RIGHT)
-            elif event.key == pygame.K_SPACE:
-                player.setIsWaiting(False)
+                if (player.x + 1 < interface.scale) and (not isinstance(object_map[player.y][player.x + 1], Barrier)):
+                    player.move(RIGHT)
