@@ -1,1 +1,2 @@
-data\\scores.txt
+data/scores.txt
+__pycache__/
