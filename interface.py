@@ -40,7 +40,7 @@ def load_interface():
     # pygame.display.set_mode((0,0), pygame.FULLSCREEN)
     
 # apply text to screen
-def text_to_screen(screen, text, x, y, size=40,
+def text_to_screen(screen, text, x, y, size=20,
                    color=red, font_type='data/slkscr.ttf'):
     text = str(text)
     font = pygame.font.Font(font_type, size)
@@ -50,8 +50,8 @@ def text_to_screen(screen, text, x, y, size=40,
 def display_transition_screen(text1, text2 = "Press space to continue", await_space=True):
     # display transition screen
     screen.fill(black)
-    text_to_screen(screen=screen, text=text1, x=100, y=250, color=white)
-    text_to_screen(screen=screen, text=text2, x=100, y=400, color=white)
+    text_to_screen(screen=screen, text=text1, x=100, y=250, size=50, color=white)
+    text_to_screen(screen=screen, text=text2, x=100, y=400, size=50, color=white)
     pygame.display.flip()
     
     while await_space:
@@ -70,11 +70,7 @@ def print_screen(screen, player, game_objects, level):
     screen.fill(green)
     if len(game_objects) != 0:
         for obj in game_objects:
-            if isinstance(obj, list):
-                for item in obj:
-                    item.draw()
-            else:
-                obj.draw()
+            obj.draw()
 
     # draw player UI on bottom of screen
     outline = pygame.rect.Rect(0, height, width, 200)

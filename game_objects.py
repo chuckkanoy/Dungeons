@@ -2,7 +2,7 @@ import pygame
 import random
 
 import interface
-from debug import board
+from timer import Timer
 
 # create base game object class for inheritance
 class GameObject:
@@ -29,8 +29,6 @@ class Door(GameObject):
     def draw(self):
         image = pygame.image.load('data/door.png')  # adjust as needed if file changes
         interface.screen.blit(image, self.rect)
-        # change board variable
-        board[self.y][self.x] = 2
         
         
 # defines player in game
@@ -41,20 +39,10 @@ class Player(GameObject):
         self.name = ""
         self.health = health
         self.points = 0
-        # change board variable
-        board[y][x] = 1
 
     # draws player to screen
     def draw(self):
         image = pygame.image.load('data/hero.png')  # adjust as needed if file changes
-
-        # change sprite direction
-        # if self.face == interface.LEFT:
-        #     image = pygame.transform.rotate(image, 270)
-        # elif self.face == interface.UP:
-        #     image = pygame.transform.rotate(image, 180)
-        # elif self.face == interface.RIGHT:
-        #     image = pygame.transform.rotate(image, 90)
 
         interface.screen.blit(image, self.rect)
 
@@ -63,22 +51,15 @@ class Player(GameObject):
         if direction == interface.UP and self.y > 0:
             self.rect.move_ip(0, -self.vel * interface.square)
             self.y -= self.vel
-            self.face = interface.UP
         elif direction == interface.DOWN and self.y < interface.scale - 1:
             self.rect.move_ip(0, self.vel * interface.square)
             self.y += self.vel
-            self.face = interface.DOWN
         elif direction == interface.LEFT and self.x > 0:
             self.rect.move_ip(-self.vel * interface.square, 0)
             self.x -= self.vel
-            self.face = interface.LEFT
         elif direction == interface.RIGHT and self.x < interface.scale - 1:
             self.rect.move_ip(self.vel * interface.square, 0)
             self.x += self.vel
-            self.face = interface.RIGHT
-
-        # change board variable
-        board[self.y][self.x] = 1
 
     # handle space bar use
     def fire(self, enemy, door):
@@ -165,13 +146,7 @@ class Enemy(GameObject):
         self.face = interface.DOWN
         self.enemies = [count]
         self.damage = 10
-        self.movement_time = 1 # seconds
-
-    def __getitem__(self, index):
-        return self.enemies[index]
-
-    def __setitem__(self, index, value):
-        self.enemies.enemiesId[index] = value
+        self.move_timer = Timer(0.5)
 
     # draws individual enemy
     def draw(self):
@@ -188,32 +163,27 @@ class Enemy(GameObject):
         interface.screen.blit(image, self.rect)
 
     # moves individual enemies
-    def move(self, player, barrier):
-        actual = self.vel * interface.square
-        x_dist = abs(self.x - player.x)
-        y_dist = abs(self.y - player.y)
+    def move(self, player, game_objects):
+        if self.move_timer.is_expired():
+            self.move_timer.reset()
+            actual = self.vel * interface.square
+            x_dist = abs(self.x - player.x)
+            y_dist = abs(self.y - player.y)
 
-        if x_dist > y_dist:
-            if self.x > player.x and (self.x - 1 != barrier.x or self.y != barrier.y):
-                self.rect.move_ip(-actual, 0)
-                self.x -= self.vel
-                # self.face = interface.LEFT
-            elif self.x < player.x and (self.x + 1 != barrier.x or self.y != barrier.y):
-                self.rect.move_ip(actual, 0)
-                self.x += self.vel
-                # self.face = interface.RIGHT
-        else:
-            if self.y > player.y and (self.x != barrier.x or self.y - 1 != barrier.y):
-                self.rect.move_ip(0, -actual)
-                self.y -= self.vel
-                # self.face = interface.UP
-            elif self.y < player.y and (self.x != barrier.x or self.y + 1 != barrier.y):
-                self.rect.move_ip(0, actual)
-                self.y += self.vel
-                # self.face = interface.DOWN
-        print("moving enemy")
-
-        board[self.y][self.x] = 3
+            if x_dist > y_dist:
+                if self.x > player.x and 0 <= (self.x - 1) < interface.scale and (not isinstance(game_objects[self.y][self.x - 1], (Barrier, Enemy))):
+                    self.rect.move_ip(-actual, 0)
+                    self.x -= self.vel
+                elif self.x < player.x and 0 <= (self.x + 1) < interface.scale and (not isinstance(game_objects[self.y][self.x + 1], (Barrier, Enemy))):
+                    self.rect.move_ip(actual, 0)
+                    self.x += self.vel
+            else:
+                if self.y > player.y and 0 <= (self.y - 1) < interface.scale and (not isinstance(game_objects[self.y - 1][self.x], (Barrier, Enemy))):
+                    self.rect.move_ip(0, -actual)
+                    self.y -= self.vel
+                elif self.y < player.y and 0 <= (self.y + 1) < interface.scale and (not isinstance(game_objects[self.y + 1][self.x], (Barrier, Enemy))):
+                    self.rect.move_ip(0, actual)
+                    self.y += self.vel
 
 
 # class for power ups in game
@@ -236,13 +206,6 @@ class Health(PowerUp):
     def draw(self):
         image = pygame.image.load('data/heart.png')  # adjust as needed if file changes
         interface.screen.blit(image, self.rect)
-        # change board variable
-        board[self.y][self.x] = 5
-
-    # cause special effect on player variable
-    def boost(self, player):
-        if self.check_collision(player):
-            player.health += 1
 
 
 # class for treasure power interface.UP
@@ -253,10 +216,3 @@ class Treasure(PowerUp):
     def draw(self):
         image = pygame.image.load('data/chest.png')  # adjust as needed if file changes
         interface.screen.blit(image, self.rect)
-        # change board variable
-        board[self.y][self.x] = 6
-
-    # cause special effect on player variable
-    def boost(self, player):
-        if self.check_collision(player):
-            player.points += 5

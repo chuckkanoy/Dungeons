@@ -15,6 +15,7 @@ from interface import text_to_screen, display_transition_screen, print_screen
 from game_objects import Door, Player, Barrier, Health, Treasure, Enemy
 
 MAX_HEALTH = 100
+MAX_BARRIERS = 5
 
 class GameCabinet:
     num_barriers = 0
@@ -26,8 +27,9 @@ class GameCabinet:
     door = Door(random.randint(0, interface.scale - 1), random.randint(0, interface.scale - 1), interface.black)
     powerup = []
     game_objects = []
-    barrier = Barrier()
     soundOn = False
+    debugMode = False
+    high_score = 0
     
     game_object_map = [[None] * interface.scale] * interface.scale
 
@@ -40,10 +42,9 @@ class GameCabinet:
         interface.display_transition_screen("Dungeons")
         
         while self.is_game_running():
-            self.setup_level()
+            self.setup_level(self.debugMode)
             self.game_play()
             self.game_over()
-            self.get_player_data()
             self.show_scores()
             
 
@@ -76,9 +77,10 @@ class GameCabinet:
 
 
     # setup game variables
-    def setup_level(self):
+    def setup_level(self, debug=False):
         # clear the object map on initial setup
         self.game_object_map = [[None for _ in range(interface.scale)] for _ in range(interface.scale)]
+        self.game_objects = []
         
         self.add_object_to_map(self.player)
         self.add_object_to_map(self.door)
@@ -102,10 +104,13 @@ class GameCabinet:
                 self.enemies += [enemy]
                 self.add_object_to_map(enemy)
 
-        # for j in range(num_barriers):
-        barrier = Barrier()
-        self.add_object_to_map(barrier)
-        self.display_board()
+        # add barriers
+        self.num_barriers = random.randint(1, 5)
+        for _ in range(self.num_barriers):
+            barrier = Barrier()
+            self.add_object_to_map(barrier)
+            if debug:
+                self.display_board()
     
     def add_object_to_map(self, obj):
         while self.game_object_map[obj.y][obj.x] is not None:
@@ -146,10 +151,8 @@ class GameCabinet:
                 else:
                     self.handle_object_collision(obj)
             for enemy in self.enemies:
-                # TODO: add timers and use with enemy.movement_time
-                enemy.move(self.player, self.barrier)
+                enemy.move(self.player, self.game_object_map)
             sleep(0.01)
-
 
     # handle what happens upon player death
     def game_over(self):
@@ -157,19 +160,13 @@ class GameCabinet:
         self.sort_scores()
         self.write_score()
 
-        # declare and adjust global variables
-        name = ""
-        self.points = 0
-        health = 5
-
         display_transition_screen("Game Over")
-
-        global level
-        level = 1
-
-        global enemy_increase_rate
-        enemy_increase_rate = 0
-
+        
+        # reset game variables if they want to play again
+        self.player.health = MAX_HEALTH
+        self.points = 0
+        self.level = 0
+        self.enemy_increase_rate = 0
 
     # display the level the player is on
     def transition_level(self):
@@ -179,7 +176,7 @@ class GameCabinet:
         if (self.level % 5) == 0:
             self.enemy_increase_rate += 1
             
-        self.setup_level()
+        self.setup_level(self.debugMode)
         
         interface.display_transition_screen("Level " + str(self.level))
 
@@ -216,7 +213,13 @@ class GameCabinet:
 
     # display scores to screen
     def show_scores(self):
+        # read in file
+        f = open("data/scores.txt")
+        lowest_high_score = f.readlines()[4].split(" ")[0]
+        
         # sort the scores before showing
+        if self.player.points > int(lowest_high_score):
+            self.get_player_data()
         self.write_score()
         self.sort_scores()
 
